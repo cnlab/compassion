@@ -1,4 +1,6 @@
+library(boot)
 library(corrplot)
+library(irr)
 library(lme4)
 library(ggplot2)
 library(Rcpp)
@@ -14,17 +16,8 @@ rm(list = ls())
 
 df <- read.csv('../helping.csv')
 
-df <- mutate(df, race_bi= case_when(
-  race == 1  ~ 1, 
-  race == 2  ~ 2, 
-  race == 3  ~ 2, 
-  race == 4  ~ 2, 
-  race == 5  ~ 2, 
-  race == 6  ~ 2, 
-))
-
-
-#IRI
+# Interpersonal Reactivity Index(IRI)
+## reverse code items 
 
 df <- mutate(df, iri1r= case_when(
   iri1 == 1  ~ 5, 
@@ -67,55 +60,60 @@ df <- mutate(df, iri10r= case_when(
 ))
 
 df <- mutate(df, iri15r= case_when(
-  iri10 == 1  ~ 5, 
-  iri10 == 2  ~ 4, 
-  iri10 == 3  ~ 3, 
-  iri10 == 4  ~ 2, 
-  iri10 == 5  ~ 1, 
+  iri15 == 1  ~ 5, 
+  iri15 == 2  ~ 4, 
+  iri15 == 3  ~ 3, 
+  iri15 == 4  ~ 2, 
+  iri15 == 5  ~ 1, 
 ))
 
 df <- mutate(df, iri16r= case_when(
-  iri10 == 1  ~ 5, 
-  iri10 == 2  ~ 4, 
-  iri10 == 3  ~ 3, 
-  iri10 == 4  ~ 2, 
-  iri10 == 5  ~ 1, 
+  iri16 == 1  ~ 5, 
+  iri16 == 2  ~ 4, 
+  iri16 == 3  ~ 3, 
+  iri16 == 4  ~ 2, 
+  iri16 == 5  ~ 1, 
 ))
 
 df <- mutate(df, iri22r= case_when(
-  iri10 == 1  ~ 5, 
-  iri10 == 2  ~ 4, 
-  iri10 == 3  ~ 3, 
-  iri10 == 4  ~ 2, 
-  iri10 == 5  ~ 1, 
+  iri22 == 1  ~ 5, 
+  iri22 == 2  ~ 4, 
+  iri22 == 3  ~ 3, 
+  iri22 == 4  ~ 2, 
+  iri22 == 5  ~ 1, 
 ))
 
 df <- mutate(df, iri23r= case_when(
-  iri10 == 1  ~ 5, 
-  iri10 == 2  ~ 4, 
-  iri10 == 3  ~ 3, 
-  iri10 == 4  ~ 2, 
-  iri10 == 5  ~ 1, 
+  iri23 == 1  ~ 5, 
+  iri23 == 2  ~ 4, 
+  iri23 == 3  ~ 3, 
+  iri23 == 4  ~ 2, 
+  iri23 == 5  ~ 1, 
 ))
 
-
+## calculate means for personal distress ("distress"), empathic concern ("concern"), perspective taking ("perspect"), and fantasy ("fantasy") 
 df$distress = rowMeans(df[,c("iri1r", "iri2r","iri3", "iri4","iri5", "iri6","iri7")])
 df$concern = rowMeans(df[,c("iri8r", "iri9r","iri10r", "iri11","iri12", "iri13","iri14")])
 df$perspect = rowMeans(df[,c("iri22r", "iri23r","iri24", "iri25","iri26", "iri27","iri28")])
 df$fantasy = rowMeans(df[,c("iri15r", "iri16r","iri17", "iri18","iri19", "iri20","iri21")])
+
+# Helping
+## sum the amount of help given to others in the past month
 df$help = rowSums(df[,c("social_support1a", "social_support1b","social_support1c", "social_support1d")])
 
+# Emotion experienced while listening to someone else's emotional life story
 
-#emotion while listening to the story
-
+## positive affect ("story_pa")
 df$story_pa =rowMeans(df[,c("story_connected","story_understanding","story_supportive","story_compassionate",
                             "story_loving","story_trusting","story_interested","story_satisfied","story_relaxed", 
                             "story_pleasant","story_good","story_accepting","story_comfortable","story_happy", 
                             "story_important")])
 
+## negative affect ("story_na")
 df$story_na =rowMeans(df[,c("story_stressed","story_nervous","story_anxious","story_annoyed","story_uncomfortable",
                             "story_dissatisfied","story_insecure","story_sad","story_failure","story_incomplete", 
                             "story_uninterested")])
+
 ################
 #### METHOD ####
 ################
@@ -127,7 +125,6 @@ table(df$race)
 #Measures
 
 # Crombach's alpha
-
 
 df_concern <- df[ , c("iri8r", "iri9r","iri10r", "iri11","iri12", "iri13","iri14")]    
 alpha(df_concern)
@@ -161,28 +158,26 @@ table(df$race)
 summary(lm(story_pa ~ age, df)) 
 
 ##Participants’ race/ethnicity did not co-vary with any of the primary outcomes (p>0.30).
-summary(lm(help ~ age, df))
+summary(lm(social_support_given ~ age, df))
 summary(lm(story_na ~ age, df))
-summary(lm(help ~ race, df))
+summary(lm(social_support_given ~ race, df))
 summary(lm(story_pa ~ race, df))
 summary(lm(story_na ~ race, df))
 
 #Analysis Plan
 ##we did not find any significant interaction between our primary predictors and the intervention condition.
 
-summary(lm(help ~ distress * cond + age + race_bi,  df))
-summary(lm(help ~ concern * cond + age + race_bi,  df))
-summary(lm(help ~ perspect * cond + age + race_bi,  df))
+summary(lm(help ~ distress * cond + age  ,  df))
+summary(lm(help ~ concern * cond + age  ,  df))
+summary(lm(help ~ perspect * cond + age  ,  df))
 
-summary(lm(story_na ~ distress * cond  + age + race_bi,  df))
-summary(lm(story_na ~ concern * cond  + age + race_bi,  df))
-summary(lm(story_na ~ perspect * cond  + age + race_bi,  df))
+summary(lm(story_na ~ distress * cond  + age  ,  df))
+summary(lm(story_na ~ concern * cond  + age  ,  df))
+summary(lm(story_na ~ perspect * cond  + age  ,  df))
 
-summary(lm(story_pa ~ distress * cond  + age + race_bi,  df))
-summary(lm(story_pa ~ concern * cond  + age + race_bi,  df))
-summary(lm(story_pa ~ perspect * cond  + age + race_bi,  df))
-
-
+summary(lm(story_pa ~ distress * cond  + age  ,  df))
+summary(lm(story_pa ~ concern * cond  + age  ,  df))
+summary(lm(story_pa ~ perspect * cond  + age  ,  df))
 
 
 #################
@@ -196,15 +191,15 @@ cor.test(df$distress, df$perspect)
 
 ## Empathy and Helping
 
-test =lm(help ~ concern + age + race_bi ,  df)
+test =lm(help ~ concern + age ,  df)
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-test =lm(help ~ perspect + age + race_bi ,  df)
+test =lm(help ~ perspect + age  ,  df)
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-test =lm(help ~ distress + age + race_bi ,  df)
+test =lm(help ~ distress + age  ,  df)
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
@@ -212,29 +207,27 @@ summ(test, digits = 3, confint = TRUE)
 
 ## Empathy and Affective Responses to Others Emotions
 
-test =lm(story_pa ~ concern   + age + race_bi ,  df) #NA
+test =lm(story_pa ~ concern   + age ,  df) #NA
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-test =lm(story_pa ~ perspect + age + race_bi  ,  df) #NA
+test =lm(story_pa ~ perspect + age  ,  df) #NA
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-
-
-test =lm(story_na ~ distress +  age + race_bi ,  df) 
+test =lm(story_pa ~ distress + age  ,  df) 
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-test =lm(story_pa ~ distress + age + race_bi ,  df) #sig
+test =lm(story_na ~ distress +  age  ,  df) 
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-test =lm(story_na ~ concern +  age + race_bi ,  df) 
+test =lm(story_na ~ concern +  age ,  df) 
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
-test =lm(story_na ~ perspect +  age + race_bi ,  df) 
+test =lm(story_na ~ perspect +  age  ,  df) 
 summary(test)
 summ(test, digits = 3, confint = TRUE)
 
@@ -242,50 +235,42 @@ summ(test, digits = 3, confint = TRUE)
 
 ##Indirect Effects of Empathy on Helping through Affects
 
-### Concern
-full_model = lm(help ~ story_pa + concern   + age + race_bi , data= df)
-summary(full_model)
+df$Y= df$help 
+df$C= df$age
+## enter the correct variable names for each model
+df$X = df$perspect  #concern perspect distress
+df$M = df$story_pa #story_pa story_na
 
-mediate_model = lm(story_pa ~ concern  + age + race_bi  , data=df)
-summary(mediate_model)
+model_a <- lm(M ~ X + C, df)
+a <- coef(model_a)["X"]
 
-results = mediation:: mediate(mediate_model, full_model, treat="concern", 
-                              mediator = "story_pa",
-                              boot=TRUE, sims=500)
-summary(results)
+model_b <- lm(Y ~ M + X + C, df)
+b <- coef(model_b)["M"]
 
-### Perspective taking
-full_model = lm(help ~ story_pa + perspect   + age + race_bi , data= df)
-summary(full_model)
+indirect_effect <- a * b
 
-mediate_model = lm(story_pa ~ perspect  + age + race_bi  , data=df)
-summary(mediate_model)
+set.seed(123)
+bootstrap_results <- boot::boot(
+  data = df,
+  statistic = function(data, indices) {
+    d <- data[indices, ]
+    a <- coef(lm(M ~ X +  C , data = d))["X"]
+    b <- coef(lm(Y ~ M + X +  age , data = d))["M"]
+    return(a * b)
+  },
+  R = 5000
+)
 
-results = mediation:: mediate(mediate_model, full_model, treat="perspect", 
-                              mediator = "story_pa",
-                              boot=TRUE, sims=500)
-summary(results)
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
 
-### Distress
-full_model = lm(help ~ story_na + distress  + age + race_bi , data= df)
-summary(full_model)
 
-mediate_model = lm(story_na ~ distress + age + race_bi   , data=df)
-summary(mediate_model)
-
-results = mediation:: mediate(mediate_model, full_model, treat="distress", 
-                              mediator = "story_na",
-                              boot=TRUE, sims=500)
-summary(results)
-
-  
 
 #################
 #### FIGURES ####
 #################
 
 #Figure 2
-
 
 ggplot(df,aes(concern,story_pa))+
   geom_smooth(method=lm,color="#D8D8D8")+
@@ -342,6 +327,93 @@ ggplot(df,aes(distress,story_na))+
   scale_color_jama() +theme(panel.grid.major = element_blank())
 
 
+###############
+#### Table ####
+###############
+
+#Empathic Concern→ Positive Affect → Helping
+
+##a path
+test =lm(story_pa ~ concern + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+##b and c' paths
+test =lm(help ~ concern + story_pa + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+##c path
+test =lm(help ~ concern + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+## a*b rerun the mediation analysis from above
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
+
+#Perspective Taking → Positive Affect → Helping
+
+##a path
+test =lm(story_pa ~ perspect + age, df)
+summary(test)
+
+##b and c' paths
+test =lm(help ~ perspect + story_pa + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE, standardize = FALSE)
+
+##c path
+test =lm(help ~ perspect + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE, standardize = FALSE)
+
+## a*b rerun the mediation analysis from above
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
+
+#Personal Distress → Positive Affect → Helping
+
+##a path
+test =lm(story_pa ~ distress + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+##b and c' paths
+test =lm(help ~ distress + story_pa + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+##c path
+test =lm(help ~ distress + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+## a*b rerun the mediation analysis from above
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
+
+
+#Personal Distress → Negative Affect → Helping
+##a path
+test =lm(story_na ~ distress + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+##b and c' paths
+test =lm(help ~ distress + story_na + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+##c path
+test =lm(help ~ distress + age, df)
+summary(test)
+summ(test, digits = 3, confint = TRUE)
+
+## a*b rerun the mediation analysis from above
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
+
 
 #######################
 #### Supplementary ####
@@ -353,23 +425,40 @@ cor.test(df$fantasy, df$concern)
 cor.test(df$fantasy, df$perspect)
 cor.test(df$fantasy, df$distress)
 
-summary(lm(help ~ fantasy + age + race_bi ,  df))
-summary(lm(story_pa ~ fantasy + age + race_bi ,  df))
-summary(lm(story_na ~ fantasy + age + race_bi ,  df))
+summary(lm(help ~ fantasy + age,  df))
+summary(lm(story_pa ~ fantasy + age,  df))
+summary(lm(story_na ~ fantasy + age,  df))
 
 ##Indirect path
 
+df$Y= df$help 
+df$C= df$age
+df$X = df$fantasy 
+df$M = df$story_pa  
 
-full_model = lm(help ~ story_pa + fantasy   + age + race_bi , data= df)
-summary(full_model)
+model_a <- lm(M ~ X + C, df)
+a <- coef(model_a)["X"]
 
-mediate_model = lm(story_pa ~ fantasy  + age + race_bi  , data=df)
-summary(mediate_model)
+model_b <- lm(Y ~ M + X + C, df)
+b <- coef(model_b)["M"]
 
-results = mediation:: mediate(mediate_model, full_model, treat="fantasy", 
-                              mediator = "story_pa",
-                              boot=TRUE, sims=500)
-summary(results)
+indirect_effect <- a * b
+
+set.seed(123)
+bootstrap_results <- boot::boot(
+  data = df,
+  statistic = function(data, indices) {
+    d <- data[indices, ]
+    a <- coef(lm(M ~ X +  C , data = d))["X"]
+    b <- coef(lm(Y ~ M + X +  age , data = d))["M"]
+    return(a * b)
+  },
+  R = 5000
+)
+
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
+
 
 
 # SI3. Mood
@@ -380,21 +469,20 @@ df$story_neg = df$story_na
 df$perspective = df$perspect
 
 
-summary(lm(mDES_pos ~ concern + age + race_bi, df)) #NA
-summary(lm(mDES_neg ~ concern + age + race_bi, df)) #NA
-summary(lm(mDES_pos ~ perspect + age + race_bi, df)) #NA
-summary(lm(mDES_neg ~ perspect + age + race_bi, df)) #NA
-summary(lm(mDES_pos ~ distress + age + race_bi, df)) #NA
-summary(lm(mDES_neg ~ distress + age + race_bi, df)) #NA
+summary(lm(mDES_pos ~ concern + age, df)) #NA
+summary(lm(mDES_neg ~ concern + age, df)) #NA
+summary(lm(mDES_pos ~ perspect + age, df)) #NA
+summary(lm(mDES_neg ~ perspect + age, df)) #NA
+summary(lm(mDES_pos ~ distress + age, df)) #NA
+summary(lm(mDES_neg ~ distress + age, df)) #NA
 
 #those who were in a better mood at baseline also felt more positive in response to another’s suffering 
-summary(lm(story_pos ~ mDES_pos  + age + race_bi, df))
-summary(lm(story_pos ~ concern + mDES_pos  + age + race_bi, df)) #NA
-summary(lm(story_pos ~ perspect + mDES_pos  + age + race_bi, df)) #NA
+summary(lm(story_pos ~ mDES_pos  + age, df))
+summary(lm(story_pos ~ concern + mDES_pos  + age, df)) #NA
+summary(lm(story_pos ~ perspect + mDES_pos  + age, df)) #NA
 
 #The baseline negative mood was not associated with the degree to which people felt negative in response to another’s suffering
-summary(lm(mDES_neg ~ story_neg + age + race_bi, df)) #NA
-summary(lm(story_pos ~ mDES_pos + concern + age + race_bi, df)) #NA
+summary(lm(mDES_neg ~ story_neg + age, df)) #NA
 
 
 #Fig.SI3. Bivariate correlations among empathy, compassion, and baseline positive and negative mood
@@ -409,74 +497,118 @@ corrplot(M$r, p.mat = M$P, insig = "label_sig",
          method="color", type="lower")
 
 
-#SI4. Demographic covariates
+#SI4. Outliers
 
-## Empathy and Helping
-summary(lm(story_pa ~ distress + age,  df))
+## Univariate outliers
+df$concern_z = scale(df$concern)
+table(df$concern_z) # no outlier beyond +/- 3SD
 
-summary(lm(help ~ concern + age,  df))
-summary(lm(help ~ perspect + age,  df))
-summary(lm(help ~ distress + age,  df))
+df$perspect_z = scale(df$perspect)
+table(df$perspect_z) # no outlier beyond +/- 3SD
 
-summary(lm(story_na ~ distress + age,  df))
+df$distress_z = scale(df$distress)
+table(df$distress_z) # no outlier beyond +/- 3SD
 
-summary(lm(story_pa ~ concern + age,  df))
-summary(lm(story_pa ~ perspect + age,  df))
+df$help_z = scale(df$help) 
+table(df$help_z) # no outlier beyond +/- 3SD
 
-summary(lm(story_na ~ concern + age,  df))
-summary(lm(story_na ~ perspect + age,  df))
+df$story_pa_z = scale(df$story_pa) 
+table(df$story_pa_z) #1 outlier +3SD
+
+df$story_na_z = scale(df$story_na) 
+table(df$story_na_z) #1 outlier +3SD
+
+## Winsorize univariate outliers
+
+### positive affect
+mean_story_pa <- mean(df$story_pa, na.rm=T)
+sd_story_pa <- sd(df$story_pa, na.rm=T)
+
+lower_bound <- mean_story_pa - 3 * sd_story_pa
+upper_bound <- mean_story_pa + 3 * sd_story_pa
+
+df$story_pa_winsorized <- pmin(pmax(df$story_pa, lower_bound), upper_bound)
+
+### negative affect
+mean_story_na <- mean(df$story_na, na.rm=T)
+sd_story_na <- sd(df$story_na, na.rm=T)
+
+lower_bound <- mean_story_na - 3 * sd_story_na
+upper_bound <- mean_story_na + 3 * sd_story_na
+
+df$story_na_winsorized <- pmin(pmax(df$story_na, lower_bound), upper_bound)
+
+## Reanalyze using winsorized variables
+summary(lm(story_pa_winsorized ~ concern + age, df))
+summary(lm(story_pa_winsorized ~ perspect + age, df))
+
+summary(lm(story_na_winsorized ~ concern + age, df))
+summary(lm(story_na_winsorized ~ perspect + age, df))
+
+summary(lm(story_pa_winsorized ~ distress + age, df))
+summary(lm(story_na_winsorized ~ distress + age, df))
+
+### indirect
+df$Y= df$help 
+df$C= df$age
+## plug in the correct variable names for each model
+df$X = df$distress  #concern perspect distress
+df$M = df$story_na_winsorized #story_pa_winsorized story_na_winsorized
+
+model_a <- lm(M ~ X + C, df)
+a <- coef(model_a)["X"]
+
+model_b <- lm(Y ~ M + X + C, df)
+b <- coef(model_b)["M"]
+
+indirect_effect <- a * b
+
+set.seed(123)
+bootstrap_results <- boot::boot(
+  data = df,
+  statistic = function(data, indices) {
+    d <- data[indices, ]
+    a <- coef(lm(M ~ X +  C , data = d))["X"]
+    b <- coef(lm(Y ~ M + X +  age , data = d))["M"]
+    return(a * b)
+  },
+  R = 5000
+)
+
+bootstrap_results
+boot.ci(bootstrap_results, type = "bca")
 
 
-## mediation
-### Concern
-full_model = lm(help ~ story_pa + concern + age, data= df)
-summary(full_model)
+## Bivariate outliers (none detected using Mahalanobis distance)
+### plug in the correct variable names to visualize outliers
+df$var1 = df$perspect # concern perspect distress
+df$var2 = df$story_na #story_pa story_na
 
-mediate_model = lm(story_pa ~ concern + age , data=df)
-summary(mediate_model)
+df_sub <- df[, c("var1", "var2")]
 
-results = mediation:: mediate(mediate_model, full_model, treat="concern", 
-                              mediator = "story_pa",
-                              boot=TRUE, sims=500)
-summary(results)
+mahalanobis_dist <- mahalanobis(df_sub, colMeans(df_sub), cov(df_sub))
 
-### Perspective
-full_model = lm(help ~ story_pa + perspect + age, data= df)
-summary(full_model)
+### Set threshold for outliers (using 95% confidence level for 2 variables)
+threshold <- qchisq(0.95, df = 2)
 
-mediate_model = lm(story_pa ~ perspect + age , data=df)
-summary(mediate_model)
+outliers <- which(mahalanobis_dist > threshold)
 
-results = mediation:: mediate(mediate_model, full_model, treat="perspect", 
-                              mediator = "story_pa",
-                              boot=TRUE, sims=500)
-summary(results)
-
-### Distress
-full_model = lm(help ~ story_na + distress + age, data= df)
-summary(full_model)
-
-mediate_model = lm(story_na ~ distress + age , data=df)
-summary(mediate_model)
-
-results = mediation:: mediate(mediate_model, full_model, treat="distress", 
-                              mediator = "story_na",
-                              boot=TRUE, sims=500)
-summary(results)
-
-
-
+### Plot with outliers highlighted
+plot(df$var1, df$var2, col = ifelse(mahalanobis_dist > threshold, "red", "black"),
+     xlab = "Var1", ylab = "Var2", main = "Scatter Plot with Outliers Highlighted")
+legend("topright", legend = c("Normal", "Outlier"), col = c("black", "red"), pch = 1)
 
 #SI5. Correction for multiple comparisons
 
 ## FDR correction 
-summary(lm(help ~ concern + age + race_bi ,  df))
-summary(lm(story_pa ~ concern + age + race_bi ,  df))
-summary(lm(story_pa ~ perspect + age + race_bi ,  df))
-summary(lm(story_na ~ distress +  age + race_bi ,  df))
+summary(lm(help ~ concern + age,  df))
+summary(lm(story_pa ~ concern + age,  df))
+summary(lm(story_pa ~ perspect + age,  df))
+summary(lm(story_pa ~ distress +  age,  df))
+summary(lm(story_na ~ distress +  age,  df))
 #ACME ps for mediation analysis = 0.036 and 0.028
-p = c(0.0361,0.000299,0.000905, 0.0205, 0.036, 0.028)
-round(p.adjust(p, "BH"), 6)
+p = c(0.0344,0.000308,0.000562, 0.04438, 0.0165)
+round(p.adjust(p, "BH"), 5)
 
 
 
