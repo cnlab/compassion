@@ -1,3 +1,5 @@
+
+
 library(boot)
 library(corrplot)
 library(irr)
@@ -8,7 +10,6 @@ library(psych)
 library(dplyr)
 library(tidyr)
 library(jtools)
-library(mediation)
 library(psych)
 library(ggsci)
 
@@ -158,26 +159,24 @@ table(df$race)
 summary(lm(story_pa ~ age, df)) 
 
 ##Participants’ race/ethnicity did not co-vary with any of the primary outcomes (p>0.30).
-summary(lm(social_support_given ~ age, df))
-summary(lm(story_na ~ age, df))
-summary(lm(social_support_given ~ race, df))
+summary(lm(help ~ race, df))
 summary(lm(story_pa ~ race, df))
 summary(lm(story_na ~ race, df))
 
 #Analysis Plan
 ##we did not find any significant interaction between our primary predictors and the intervention condition.
 
-summary(lm(help ~ distress * cond + age  ,  df))
-summary(lm(help ~ concern * cond + age  ,  df))
-summary(lm(help ~ perspect * cond + age  ,  df))
+summary(lm(help ~ distress * cond + age,  df))
+summary(lm(help ~ concern * cond + age,  df))
+summary(lm(help ~ perspect * cond + age,  df))
 
-summary(lm(story_na ~ distress * cond  + age  ,  df))
-summary(lm(story_na ~ concern * cond  + age  ,  df))
-summary(lm(story_na ~ perspect * cond  + age  ,  df))
+summary(lm(story_na ~ distress * cond  + age,  df))
+summary(lm(story_na ~ concern * cond  + age,  df))
+summary(lm(story_na ~ perspect * cond  + age,  df))
 
-summary(lm(story_pa ~ distress * cond  + age  ,  df))
-summary(lm(story_pa ~ concern * cond  + age  ,  df))
-summary(lm(story_pa ~ perspect * cond  + age  ,  df))
+summary(lm(story_pa ~ distress * cond  + age,  df))
+summary(lm(story_pa ~ concern * cond  + age,  df))
+summary(lm(story_pa ~ perspect * cond  + age,  df))
 
 
 #################
@@ -238,8 +237,8 @@ summ(test, digits = 3, confint = TRUE)
 df$Y= df$help 
 df$C= df$age
 ## enter the correct variable names for each model
-df$X = df$perspect  #concern perspect distress
-df$M = df$story_pa #story_pa story_na
+df$X = df$distress  #concern perspect distress
+df$M = df$story_na #story_pa story_na
 
 model_a <- lm(M ~ X + C, df)
 a <- coef(model_a)["X"]
@@ -429,37 +428,6 @@ summary(lm(help ~ fantasy + age,  df))
 summary(lm(story_pa ~ fantasy + age,  df))
 summary(lm(story_na ~ fantasy + age,  df))
 
-##Indirect path
-
-df$Y= df$help 
-df$C= df$age
-df$X = df$fantasy 
-df$M = df$story_pa  
-
-model_a <- lm(M ~ X + C, df)
-a <- coef(model_a)["X"]
-
-model_b <- lm(Y ~ M + X + C, df)
-b <- coef(model_b)["M"]
-
-indirect_effect <- a * b
-
-set.seed(123)
-bootstrap_results <- boot::boot(
-  data = df,
-  statistic = function(data, indices) {
-    d <- data[indices, ]
-    a <- coef(lm(M ~ X +  C , data = d))["X"]
-    b <- coef(lm(Y ~ M + X +  age , data = d))["M"]
-    return(a * b)
-  },
-  R = 5000
-)
-
-bootstrap_results
-boot.ci(bootstrap_results, type = "bca")
-
-
 
 # SI3. Mood
 df$mDES_pos = df$mdes_T1_PA
@@ -606,10 +574,8 @@ summary(lm(story_pa ~ concern + age,  df))
 summary(lm(story_pa ~ perspect + age,  df))
 summary(lm(story_pa ~ distress +  age,  df))
 summary(lm(story_na ~ distress +  age,  df))
-#ACME ps for mediation analysis = 0.036 and 0.028
-p = c(0.0344,0.000308,0.000562, 0.04438, 0.0165)
+
+p = c(0.0344,0.000308,0.00173, 0.04438, 0.0165)
 round(p.adjust(p, "BH"), 5)
-
-
 
 
